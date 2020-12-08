@@ -1,0 +1,10 @@
+.vscode
+.vs
+*.vcxproj
+*.exe
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.o
+x64
+data
