@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-04 23:23:27
- * @LastEditTime: 2020-12-08 15:11:52
+ * @LastEditTime: 2020-12-09 09:23:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\dao.c
@@ -16,13 +16,15 @@
 #include "model.h"
 
 // user
+trie *dict_user_id;
 trie *dict_user;
 vector *users;
 int user_id_inc;
 
 // book
+trie *dict_book_id;
 trie *dict_book;
-vector *books;
+vector *roll_vector;
 int book_id_inc;
 
 bool db_init() {
@@ -37,11 +39,11 @@ bool db_init() {
     }
 
     users = read_file(DB_USER, sizeof(USER));
-    books = read_file(DB_BOOK, sizeof(BOOK));
+    roll_vector = read_file(DB_BOOK, sizeof(BOOK));
 
     // calculate borrowed books
-    for (int i = 0; i < vector_size(books) ; i++) {
-        BOOK *book = vector_get(books, i);
+    for (int i = 0; i < vector_size(roll_vector) ; i++) {
+        BOOK *book = vector_get(roll_vector, i);
         book->borrowed = 0;
     }
 
@@ -56,22 +58,26 @@ bool db_init() {
         user->borrowed = borrowed;
         for (int j = 0; j < vector_size(borrowed) ; j++) {
             int book_id = vector_get_int(borrowed, j);
-            BOOK *book = vector_get(books, book_id);
+            BOOK *book = vector_get(roll_vector, book_id);
             book->borrowed++;
         }
     }
 
     // build trie
     dict_user = new_trie();
+    dict_user_id = new_trie();
     for (int i = 0 ; i < vector_size(users) ; i++) {
         USER *user = vector_get(users, i);
         trie_add(dict_user, user->name, user);
+        trie_add_int(dict_user_id, user->id, user);
     }
 
     dict_book = new_trie();
-    for (int i = 0; i < vector_size(books) ; i++) {
-        BOOK *book = vector_get(books, i);
+    dict_book_id = new_trie();
+    for (int i = 0; i < vector_size(roll_vector) ; i++) {
+        BOOK *book = vector_get(roll_vector, i);
         trie_add(dict_book, book->name, book);
+        trie_add_int(dict_book_id, book->id, book);
     }
 }
 
@@ -92,7 +98,7 @@ bool db_close() {
     }
 
     write_file_cover(DB_USER, users, sizeof(USER));
-    write_file_cover(DB_BOOK, books, sizeof(BOOK));
+    write_file_cover(DB_BOOK, v, sizeof(BOOK));
     
     for (int i = 0 ; i < vector_size(users) ; i++) {
         USER *user = vector_get(users, i);
@@ -100,15 +106,21 @@ bool db_close() {
     }
     free_vector(users);
     
-    for (int i = 0 ; i < vector_size(books) ; i++) {
-        BOOK *book = vector_get(books, i);
+    for (int i = 0 ; i < vector_size(v) ; i++) {
+        BOOK *book = vector_get(v, i);
         free_book(book);
     }
-    free_vector(books);
+    free_vector(v);
 
     free_trie(dict_user);
+    free_trie(dict_user_id);
     free_trie(dict_book);
+    free_trie(dict_book_id);
     return true;
+}
+
+vector *list_user() {
+    return users;
 }
 
 USER *get_user(char *name) {
@@ -116,10 +128,16 @@ USER *get_user(char *name) {
     return user;
 }
 
+USER *get_user_by_id(int id) {
+    USER *user = trie_find_int(dict_user_id, id);
+    return user;
+}
+
 USER *add_user(char *name, char *pwd, bool is_admin) {
     if (user_id_inc == 0) is_admin = true;
     USER *user = new_user(user_id_inc++, name, pwd, is_admin);
-    trie_add(dict_user, name, user);
+    trie_add(dict_user, user->name, user);
+    trie_add_int(dict_user_id, user->id, user);
     vector_push(users, user);
     return user;
 }
@@ -132,6 +150,7 @@ USER *modify_user(USER *user, char *pwd, bool is_admin) {
 
 void delete_user(USER *user) {
     trie_delete(dict_user, user->name);
+    trie_delete_int(dict_user_id, user->id);
     vector_delete_elem(users, user);
     free_user(user);
 }
@@ -141,6 +160,56 @@ BOOK *get_book(char *name) {
     return book;
 }
 
+BOOK *add_book(char *name, char *public, char *author, int price, int total) {
+    BOOK *book = new_book(book_id_inc++, name, public, author, price, total);
+    trie_add(dict_book, book->name, book);
+    trie_add_int(dict_book_id, book->id, book);
+    vector_push(roll_vector, book);
+    return book;
+}
+
+BOOK *get_book_by_id(int id) {
+    BOOK *book = trie_find_int(dict_book_id, id);
+    return book;
+}
+
 vector *list_book() {
-    return books;
+    return roll_vector;
+}
+
+BOOK *modify_book(BOOK *book, char *name, char *public, char *author, int price, int total, int borrowed) {
+    if (name) strcpy(book->name, name);
+    if (public) strcpy(book->public, public);
+    if (author) strcpy(book->author, author);
+    if (price != -1) book->price = price;
+    if (total != -1) book->total = total;
+    if (borrowed != -1) book->borrowed = borrowed;
+    return book;
+}
+
+void delete_book(BOOK *book) {
+    trie_delete(dict_book, book->name);
+    trie_delete_int(dict_book_id, book->id);
+    vector_delete_elem(roll_vector, book);
+    free_book(book);
+}
+
+void add_user_borrowed(USER *user, int book_id) {
+    vector_push_int(user->borrowed, book_id);
+}
+
+bool delete_user_borrowed(USER *user, int book_id) {
+    vector *v = user->borrowed;
+    for (int i = 0 ; i < vector_size(v) ; i++) {
+        BOOK *book = vector_get(v, i);
+        if (book_id == book->id) {
+            vector_delete(v, i);
+            return true;
+        }
+    }
+    return false;
+}
+
+vector *get_user_borrowed(USER *user) {
+    return user->borrowed;
 }

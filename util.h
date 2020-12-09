@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-06 14:42:48
- * @LastEditTime: 2020-12-08 14:49:56
+ * @LastEditTime: 2020-12-09 08:21:50
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\util.h
@@ -49,9 +49,12 @@ typedef struct {
 trie *new_trie();
 void free_trie(trie *t);
 void *trie_find(trie *t, char *name);
+void *trie_find_int(trie *t, int i);
 void *trie_find_fuzzy(trie *t, char *name);
 void trie_add(trie *t, char *name, void *data);
+void trie_add_int(trie *t, int i, void *data);
 void trie_delete(trie *t, char *name);
+void trie_delete_int(trie *t, int i);
 
 // utils
 int asprintf(char *strp[], const char *fmt, ...);

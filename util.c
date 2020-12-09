@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-06 14:42:58
- * @LastEditTime: 2020-12-08 14:27:36
+ * @LastEditTime: 2020-12-09 08:55:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\util.c
@@ -182,6 +182,14 @@ void *trie_find(trie *t, char *name) {
     }
 }
 
+void *trie_find_int(trie *t, int i) {
+    char *int_ptr = calloc(1, sizeof(int) + 1);
+    memcpy(int_ptr, &i, sizeof(int));
+    void *data = trie_find(t, int_ptr);
+    free(int_ptr);
+    return data;
+}
+
 static void *trie_find_fuzzy_dfs(struct node *n) {
     if (n == NULL) return NULL;
     for (int i = 0; i < 256; i++) {
@@ -220,6 +228,13 @@ void trie_add(trie *t, char *name, void *data) {
     n->data = data;
 }
 
+void trie_add_int(trie *t, int i, void *data) {
+    char *int_ptr = calloc(1, sizeof(int) + 1);
+    memcpy(int_ptr, &i, sizeof(int));
+    trie_add(t, int_ptr, data);
+    free(int_ptr);
+}
+
 void trie_delete(trie *t, char *name) {
     struct node *n = t->root;
     int i = 0;
@@ -229,6 +244,13 @@ void trie_delete(trie *t, char *name) {
     if (i == strlen(name) && n) {
         n->data = NULL;
     }
+}
+
+void trie_delete_int(trie *t, int i) {
+    char *int_ptr = calloc(1, sizeof(int) + 1);
+    memcpy(int_ptr, &i, sizeof(int));
+    trie_delete(t, int_ptr);
+    free(int_ptr);
 }
 
 static void free_node(struct node *n) {
@@ -257,7 +279,7 @@ static int _vscprintf_so(const char * format, va_list pargs) {
 static int vasprintf(char **strp, const char *fmt, va_list ap) {
     size_t len = _vscprintf_so(fmt, ap);
     if (len == -1) return -1;
-    char *str = malloc((size_t) len + 1);
+    char *str = malloc((size_t)len + 1);
     if (!str) return -1;
     int r = vsnprintf(str, len + 1, fmt, ap);
     if (r == -1) return free(str), -1;

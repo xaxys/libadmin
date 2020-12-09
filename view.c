@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-04 21:58:01
- * @LastEditTime: 2020-12-08 21:44:22
+ * @LastEditTime: 2020-12-09 13:32:39
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\view.c
@@ -22,8 +22,17 @@ bool wait_confirm;
 
 bool roll_mode;
 void (*roll_update_func)();
-vector *books;
-int book_idx;
+vector *roll_vector;
+int roll_idx;
+
+static void print_user_info(USER *user) {
+    printf(VIEW_USER_INFO_FORMAT,
+        user->id,
+        user->name,
+        user->pwd,
+        user->is_admin ? "是" : "否",
+        vector_size(user->borrowed));
+}
 
 static void print_book_info(BOOK *book) {
     printf(VIEW_BOOK_INFO_FORMAT,
@@ -36,10 +45,19 @@ static void print_book_info(BOOK *book) {
         book->total - book->borrowed);
 }
 
+static void roll_users() {
+    roll_idx++;
+    if (roll_idx < vector_size(roll_vector)) {
+        print_user_info(vector_get(roll_vector, roll_idx));
+    } else {
+        printf("翻到底啦！按q退出\n");
+    }
+}
+
 static void roll_books() {
-    book_idx++;
-    if (book_idx < vector_size(books)) {
-        print_book_info(vector_get(books, book_idx));
+    roll_idx++;
+    if (roll_idx < vector_size(roll_vector)) {
+        print_book_info(vector_get(roll_vector, roll_idx));
     } else {
         printf("翻到底啦！按q退出\n");
     }
@@ -70,7 +88,11 @@ static void print_page_switch() {
 }
 
 static void print_page_admin() {
-
+    printf(VIEW_PAGE_ADMIN_TITLE);
+    printf(VIEW_SEPERATOR);
+    printf(VIEW_PAGE_ADMIN_OPTIONS);
+    printf(VIEW_SEPERATOR);
+    printf("%s\n", COPYRIGHT);
 }
 
 static void print_page_book() {
@@ -81,7 +103,7 @@ static void print_page_book() {
     printf("%s\n", COPYRIGHT);
 }
 
-static refresh_page() {
+static void refresh_page() {
     switch_page(current_page);
 }
 
@@ -189,6 +211,7 @@ static void handle_page_switch(char ch) {
         if (info.state == false) {
             printf("修改密码失败！\n原因：%s\n", info.msg);
             switch_page_wait(PAGE_SWITCH);
+            break;
         } else {
             printf("修改密码成功！\n");
             switch_page_wait(PAGE_SWITCH);
@@ -202,18 +225,137 @@ static void handle_page_switch(char ch) {
     }
 }
 
+static void handle_page_admin(char ch) {
+    switch (ch) {
+    case '1': {
+        char bookname[256];
+        printf("请输入图书名：");
+        scanf("%s", bookname);
+        INFO info = book_search(bookname, true);
+        BOOK *book = info.ptr;
+        if (info.state == true) {
+            printf("找到一本同名图书：\n");
+            print_book_info(info.ptr);
+            printf("继续输入将对本书信息进行修改！[Y/n]\n");
+            char buf[256];
+            scanf("%s", buf);
+            if (strcmp(buf, "n") == 0 || strcmp(buf, "N") == 0) break;
+            printf("提示：以下项目输入-1表示不修改\n");
+        }
+        char pubname[256];
+        char author[256];
+        int price;
+        int total;
+        printf("请输入出版社：");
+        scanf("%s", pubname);
+        printf("请输入作者：");
+        scanf("%s", author);
+        printf("请输入价格：");
+        scanf("%d", &price);
+        printf("请输入数量：");
+        scanf("%d", &total);
+        if (info.state == false) {
+            info = book_add(bookname, pubname, author, price, total);
+        } else {
+            info = book_modify(book, bookname, pubname, author, price, total);
+        }
+        if (info.state == false) {
+            printf("添加/修改失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        } else {
+            printf("添加/修改成功！\n");
+            print_book_info(info.ptr);
+            switch_page_wait(PAGE_ADMIN);
+        }
+        break;
+    }
+    case '2': {
+        int book_id;
+        printf("请输入需要删除的图书ID：\n");
+        scanf("%d", &book_id);
+        INFO info = book_delete_id(book_id);
+        if (info.state == false) {
+            printf("删除失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        } else {
+            printf("删除成功！\n");
+            switch_page_wait(PAGE_ADMIN);
+        }
+        break;
+    }
+    case '3': {
+        INFO info = user_list();
+        if (info.state == false) {
+            printf("查看失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        }
+        roll_vector = info.ptr;
+        printf("总计 %d 名注册用户：\n", vector_size(roll_vector));
+        printf("按任意键滚动，按q退出查看\n");
+        for (roll_idx = 0;
+            roll_idx < DEFAULT_SHOW_ENTRIES &&
+            roll_idx < vector_size(roll_vector);
+            roll_idx++) {
+            USER *user = vector_get(roll_vector, roll_idx);
+            print_user_info(user);
+        }
+        roll_mode = true;
+        roll_update_func = roll_users;
+        break;
+    }
+    case '4': {
+        char username[256];
+        printf("请输入用户名：");
+        scanf("%s", username);
+        INFO info = user_search(username);
+        if (info.state == false) {
+            printf("修改失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        }
+        USER *user = info.ptr;
+        printf("提示：以下项目输入-1表示不修改\n");
+        char password[256];
+        char admin[256];
+        bool is_admin = user->is_admin;
+        printf("请输入密码：");
+        scanf("%s", password);
+        printf("是否为管理员[y/N]：");
+        scanf("%s", admin);
+        if (strcmp(admin, "y") == 0 || strcmp(admin, "Y") == 0) is_admin = true;
+        info = user_modify(user, password, is_admin);
+        if (info.state == false) {
+            printf("添加/修改失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        } else {
+            printf("添加/修改成功！\n");
+            print_user_info(info.ptr);
+            switch_page_wait(PAGE_ADMIN);
+        }
+        break;
+    }
+    case '5':
+        switch_page(PAGE_SWITCH);
+        break;
+    }
+}
+
 static void handle_page_book(char ch) {
     switch (ch) {
     case '1': {
         char bookname[256];
         printf("请输入图书名：");
         scanf("%s", bookname);
-        INFO info = book_search(bookname);
+        INFO info = book_search(bookname, false);
         if (info.state == false) {
             printf("查询失败！\n原因：%s\n", info.msg);
             switch_page_wait(PAGE_BOOK);
-        }
-        else {
+            break;
+        } else {
             printf("查询成功！%s\n", info.msg);
             print_book_info(info.ptr);
             switch_page_wait(PAGE_BOOK);
@@ -225,11 +367,17 @@ static void handle_page_book(char ch) {
         if (info.state == false) {
             printf("查看失败！\n原因：%s\n", info.msg);
             switch_page_wait(PAGE_BOOK);
+            break;
         }
-        books = info.ptr;
+        roll_vector = info.ptr;
+        printf("馆藏 %d 本图书：\n", vector_size(roll_vector));
         printf("按任意键滚动，按q退出查看\n");
-        for (book_idx = 0; book_idx < 10 && book_idx < vector_size(books); book_idx++) {
-            print_book_info(vector_get(books, book_idx));
+        for (roll_idx = 0;
+            roll_idx < DEFAULT_SHOW_ENTRIES &&
+            roll_idx < vector_size(roll_vector);
+            roll_idx++) {
+            BOOK *book = vector_get(roll_vector, roll_idx);
+            print_book_info(book);
         }
         roll_mode = true;
         roll_update_func = roll_books;
@@ -239,18 +387,49 @@ static void handle_page_book(char ch) {
         char bookname[256];
         printf("请输入要借阅图书名：");
         scanf("%s", bookname);
-        INFO info = book_borrow(current_user, bookname);
+        INFO info = book_borrow_name(current_user, bookname);
         if (info.state == false) {
             printf("借阅失败！\n原因：%s\n", info.msg);
             switch_page_wait(PAGE_BOOK);
-        }
-        else {
+            break;
+        } else {
             printf("借阅成功！\n");
             print_book_info(info.ptr);
             switch_page_wait(PAGE_BOOK);
         }
+        break;
     }
-    case '4':
+    case '4': {
+        INFO info = book_user_borrowed(current_user);
+        if (info.state == false) {
+            printf("借阅失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_BOOK);
+            break;
+        } else {
+            vector *v = info.ptr;
+            printf("您已借阅了%d本图书：\n", vector_size(v));
+            for (int i = 0; i < vector_size(v); i++) {
+                BOOK *book = vector_get(v, i);
+                print_book_info(book);
+            }
+        }
+        int book_id;
+        printf("请输入需要归还的图书ID：\n");
+        scanf("%d", &book_id);
+        info = book_return_id(current_user, book_id);
+        if (info.state == false) {
+            printf("归还失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_BOOK);
+            break;
+        } else {
+            printf("归还成功！\n");
+            switch_page_wait(PAGE_BOOK);
+        }
+        break;
+    }
+    case '5':
+        switch_page(PAGE_SWITCH);
+        break;
     }
 }
 
@@ -277,6 +456,9 @@ void message_loop() {
             break;
         case PAGE_SWITCH:
             handle_page_switch(ch);
+            break;
+        case PAGE_ADMIN:
+            handle_page_admin(ch);
             break;
         case PAGE_BOOK:
             handle_page_book(ch);

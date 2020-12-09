@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-05 19:23:31
- * @LastEditTime: 2020-12-05 20:19:13
+ * @LastEditTime: 2020-12-09 13:21:26
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\controller.h
@@ -11,12 +11,20 @@
 
 #include "model.h"
 
+INFO user_list();
+INFO user_search(char *username);
 INFO user_login(char *username, char *password);
 INFO user_register(char *username, char *password, bool is_admin);
 INFO user_change_pwd(char *username, char *password);
+INFO user_modify(USER *user, char *password, bool is_admin);
 
-INFO book_search(char *bookname);
+INFO book_search(char *bookname, bool specific);
 INFO book_list();
-INFO book_borrow(USER *user, char *bookname);
+INFO book_borrow_name(USER *user, char *bookname);
+INFO book_user_borrowed(USER *user);
+INFO book_return_id(USER *user, int book_id);
+INFO book_add(char *bookname, char *pubname, char *author, int price, int total);
+INFO book_modify(BOOK *book, char *bookname, char *pubname, char *author, int price, int total);
+INFO book_delete_id(int book_id);
 
 #endif
