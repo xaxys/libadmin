@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-05 12:21:25
- * @LastEditTime: 2020-12-09 13:29:58
+ * @LastEditTime: 2020-12-11 22:05:53
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\resources.h
@@ -27,7 +27,7 @@
 #define VIEW_USER_INFO_FORMAT "\
 |编号：%d\t|用户名：%s\t|密码MD5：%s\t|管理员：%s\t|在借图书 %d 本\t|\n"
 #define VIEW_BOOK_INFO_FORMAT "\
-|编号：%d\t|书名：%s\t|出版社：%s\t|作者：%s\t|售价：%d\t|馆藏 %d 本\t|剩余 % d本\t|\n"
+|编号：%d\t|书名：%s\t|出版社：%s\t|作者：%s\t|售价：%d\t|馆藏 %d 本\t|剩余 %d 本\t|\n"
 
 #define VIEW_PAGE_MAIN_WELCOME \
 "Welcome to Library Management System\n"

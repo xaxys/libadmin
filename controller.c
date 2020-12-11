@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-04 21:58:23
- * @LastEditTime: 2020-12-09 13:21:12
+ * @LastEditTime: 2020-12-11 22:02:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\controller.c
@@ -232,10 +232,15 @@ INFO book_borrow_name(USER *user, char *bookname) {
 
 INFO book_user_borrowed(USER *user) {
     vector *v = get_user_borrowed(user);
+    vector *books = new_vector();
+    for (int i = 0; i < vector_size(v); i++) {
+        BOOK *book = get_book_by_id(vector_get_int(v, i));
+        vector_push(books, book);
+    }
     INFO info = {
         true,
         "",
-        v,
+        books,
     };
     return info;
 }

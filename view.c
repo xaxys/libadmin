@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-04 21:58:01
- * @LastEditTime: 2020-12-09 13:32:39
+ * @LastEditTime: 2020-12-11 22:02:01
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\view.c
@@ -447,11 +447,12 @@ static void handle_page_book(char ch) {
             break;
         } else {
             vector *v = info.ptr;
-            printf("您已借阅了%d本图书：\n", vector_size(v));
+            printf("您已借阅了 %d 本图书：\n", vector_size(v));
             for (int i = 0; i < vector_size(v); i++) {
                 BOOK *book = vector_get(v, i);
                 print_book_info(book);
             }
+            free_vector(v);
         }
         int book_id = UNDEF;
         printf("请输入需要归还的图书ID：\n");
