@@ -137,6 +137,25 @@ INFO user_modify(USER *user, char *password, bool is_admin) {
     return info;
 }
 
+INFO user_delete_id(int user_id) {
+    USER *user = get_user_by_id(user_id);
+    if (user == NULL) {
+        INFO info = {
+            false,
+            "该用户不存在",
+            NULL,
+        };
+        return info;
+    }
+    delete_user(user);
+    INFO info = {
+        true,
+        "",
+        NULL,
+    };
+    return info;
+}
+
 INFO book_search(char *bookname, bool specific) {
     BOOK *book = get_book(bookname);
     if (book == NULL) {
@@ -313,7 +332,7 @@ INFO book_modify(BOOK *book, char *bookname, char *pubname, char *author, int pr
 }
 
 INFO book_delete_id(int book_id) {
-    BOOK* book = get_book_by_id(book_id);
+    BOOK *book = get_book_by_id(book_id);
     if (book == NULL) {
         INFO info = {
             false,

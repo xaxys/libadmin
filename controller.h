@@ -17,6 +17,7 @@ INFO user_login(char *username, char *password);
 INFO user_register(char *username, char *password, bool is_admin);
 INFO user_change_pwd(char *username, char *password);
 INFO user_modify(USER *user, char *password, bool is_admin);
+INFO user_delete_id(int user_id);
 
 INFO book_search(char *bookname, bool specific);
 INFO book_list();

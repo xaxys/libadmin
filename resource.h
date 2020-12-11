@@ -40,8 +40,10 @@ It's a experimental project developed for learning purpose.\n\
 Please expect breaking changes and unstable APIs. \n\
 Most of them are currently at an early, experimental stage.\n"
 
-#define VIEW_PAGE_SWITCH_WELCOME_FORMAT "\
-欢迎登陆 %s！\n"
+#define VIEW_PAGE_SWITCH_WELCOME_FORMAT_USER "\
+%s, 欢迎登陆 %s！\n"
+#define VIEW_PAGE_SWITCH_WELCOME_FORMAT_ADMIN "\
+%s, 欢迎登陆 管理员 %s！\n"
 #define VIEW_PAGE_SWITCH_OPTIONS_ADMIN "\
 [1]\t管理系统\n\
 [2]\t图书系统\n\
@@ -59,9 +61,9 @@ Most of them are currently at an early, experimental stage.\n"
 [1]\t添加/修改图书\n\
 [2]\t删除图书\n\
 [3]\t用户列表\n\
-[3]\t修改用户\n\
-[4]\t删除用户\n\
-[5]\t返回\n"
+[4]\t修改用户\n\
+[5]\t删除用户\n\
+[6]\t返回\n"
 
 #define VIEW_PAGE_BOOK_TITLE "\
 图书系统\n"

@@ -55,19 +55,17 @@ void *vector_delete(vector *v, int i) {
         return NULL;
     }
     void *elem = v->data[i];
-    memcpy(v->data[i], v->data[i + 1], sizeof(void *) * (v->len - i - 1));
+    memcpy(&v->data[i], &v->data[i + 1], sizeof(void *) * (v->len - i - 1));
     v->len--;
     return elem;
 }
 
 void *vector_delete_elem(vector *v, void *elem) {
-    if ((intptr_t)elem < (intptr_t)v->data ||
-        (intptr_t)elem >= (intptr_t)v->data[v->len]) {
-        return NULL;
+    for (int i = 0; i < v->len; i++) {
+        if (v->data[i] == elem) {
+            vector_delete(v, i);
+        }
     }
-    int i = ((intptr_t)elem - (intptr_t)v->data) / sizeof(void *);
-    memcpy(v->data[i], v->data[i + 1], sizeof(void *) * (v->len - i - 1));
-    v->len--;
     return elem;
 }
 
@@ -202,6 +200,7 @@ static void *trie_find_fuzzy_dfs(struct node *n) {
             if (data) return data;
         }
     }
+    return NULL;
 }
 
 void *trie_find_fuzzy(trie *t, char *name) {
@@ -267,7 +266,7 @@ void free_trie(trie *t) {
     free(t);
 }
 
-static int _vscprintf_so(const char * format, va_list pargs) {
+static int _vscprintf_so(const char *format, va_list pargs) {
     int retval;
     va_list argcopy;
     va_copy(argcopy, pargs);

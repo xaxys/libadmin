@@ -10,10 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <conio.h>
 #include "model.h"
 #include "resource.h"
 #include "controller.h"
+
+#define UNDEF -0x11037919
 
 PAGE current_page;
 USER *current_user;
@@ -76,7 +79,20 @@ static void print_page_main() {
 }
 
 static void print_page_switch() {
-    printf(VIEW_PAGE_SWITCH_WELCOME_FORMAT, current_user->name);
+    time_t now = time(NULL);
+    struct tm* local = localtime(&now);
+    char *time_tip;
+    if (local->tm_hour >= 22 || local->tm_hour < 6) time_tip = "夜深了";
+    else if (local->tm_hour >= 6 && local->tm_hour < 9) time_tip = "早上好";
+    else if (local->tm_hour >= 9 && local->tm_hour < 11) time_tip = "上午好";
+    else if (local->tm_hour >= 11 && local->tm_hour < 14) time_tip = "中午好";
+    else if (local->tm_hour >= 14 && local->tm_hour < 17) time_tip = "下午好";
+    else if (local->tm_hour >= 17 && local->tm_hour < 22) time_tip = "晚上好";
+    if (current_user->is_admin) {
+        printf(VIEW_PAGE_SWITCH_WELCOME_FORMAT_ADMIN, time_tip, current_user->name);
+    } else {
+        printf(VIEW_PAGE_SWITCH_WELCOME_FORMAT_USER, time_tip, current_user->name);
+    }
     printf(VIEW_SEPERATOR);
     if (current_user->is_admin) {
         printf(VIEW_PAGE_SWITCH_OPTIONS_ADMIN);
@@ -185,13 +201,11 @@ static void handle_page_main(char ch) {
 }
 
 static void handle_page_switch(char ch) {
+    if (current_user->is_admin == false) ch++;
     switch (ch) {
-    case '1': 
-        if (current_user->is_admin == false) ch++;
-        else {
-            switch_page(PAGE_ADMIN);
-            break;
-        }
+    case '1':
+        switch_page(PAGE_ADMIN);
+        break;
     case '2':
         switch_page(PAGE_BOOK);
         break;
@@ -271,9 +285,14 @@ static void handle_page_admin(char ch) {
         break;
     }
     case '2': {
-        int book_id;
+        int book_id = UNDEF;
         printf("请输入需要删除的图书ID：\n");
         scanf("%d", &book_id);
+        if (book_id == UNDEF) {
+            printf("请输入一个数字\n");
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        }
         INFO info = book_delete_id(book_id);
         if (info.state == false) {
             printf("删除失败！\n原因：%s\n", info.msg);
@@ -328,17 +347,38 @@ static void handle_page_admin(char ch) {
         if (strcmp(admin, "y") == 0 || strcmp(admin, "Y") == 0) is_admin = true;
         info = user_modify(user, password, is_admin);
         if (info.state == false) {
-            printf("添加/修改失败！\n原因：%s\n", info.msg);
+            printf("修改失败！\n原因：%s\n", info.msg);
             switch_page_wait(PAGE_ADMIN);
             break;
         } else {
-            printf("添加/修改成功！\n");
+            printf("修改成功！\n");
             print_user_info(info.ptr);
             switch_page_wait(PAGE_ADMIN);
         }
         break;
     }
-    case '5':
+    case '5': {
+        int user_id = UNDEF;
+        printf("请输入需要删除的用户ID：\n");
+        scanf("%d", &user_id);
+        if (user_id == UNDEF) {
+            printf("请输入一个数字\n");
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        }
+        INFO info = user_delete_id(user_id);
+        if (info.state == false) {
+            printf("删除失败！\n原因：%s\n", info.msg);
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        }
+        else {
+            printf("删除成功！\n");
+            switch_page_wait(PAGE_ADMIN);
+        }
+        break;
+    }
+    case '6':
         switch_page(PAGE_SWITCH);
         break;
     }
@@ -413,9 +453,14 @@ static void handle_page_book(char ch) {
                 print_book_info(book);
             }
         }
-        int book_id;
+        int book_id = UNDEF;
         printf("请输入需要归还的图书ID：\n");
         scanf("%d", &book_id);
+        if (book_id == UNDEF) {
+            printf("请输入一个数字\n");
+            switch_page_wait(PAGE_ADMIN);
+            break;
+        }
         info = book_return_id(current_user, book_id);
         if (info.state == false) {
             printf("归还失败！\n原因：%s\n", info.msg);

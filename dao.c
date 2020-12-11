@@ -24,8 +24,8 @@ int user_id_inc;
 // book
 trie *dict_book_id;
 trie *dict_book;
-vector *roll_vector;
 int book_id_inc;
+vector *books;
 
 bool db_init() {
     if (_access(DB_FOLDER, 0) == -1) {
@@ -39,11 +39,11 @@ bool db_init() {
     }
 
     users = read_file(DB_USER, sizeof(USER));
-    roll_vector = read_file(DB_BOOK, sizeof(BOOK));
+    books = read_file(DB_BOOK, sizeof(BOOK));
 
     // calculate borrowed books
-    for (int i = 0; i < vector_size(roll_vector) ; i++) {
-        BOOK *book = vector_get(roll_vector, i);
+    for (int i = 0; i < vector_size(books) ; i++) {
+        BOOK *book = vector_get(books, i);
         book->borrowed = 0;
     }
 
@@ -58,7 +58,7 @@ bool db_init() {
         user->borrowed = borrowed;
         for (int j = 0; j < vector_size(borrowed) ; j++) {
             int book_id = vector_get_int(borrowed, j);
-            BOOK *book = vector_get(roll_vector, book_id);
+            BOOK *book = vector_get(books, book_id);
             book->borrowed++;
         }
     }
@@ -74,8 +74,8 @@ bool db_init() {
 
     dict_book = new_trie();
     dict_book_id = new_trie();
-    for (int i = 0; i < vector_size(roll_vector) ; i++) {
-        BOOK *book = vector_get(roll_vector, i);
+    for (int i = 0; i < vector_size(books) ; i++) {
+        BOOK *book = vector_get(books, i);
         trie_add(dict_book, book->name, book);
         trie_add_int(dict_book_id, book->id, book);
     }
@@ -106,11 +106,11 @@ bool db_close() {
     }
     free_vector(users);
     
-    for (int i = 0 ; i < vector_size(v) ; i++) {
-        BOOK *book = vector_get(v, i);
+    for (int i = 0 ; i < vector_size(books) ; i++) {
+        BOOK *book = vector_get(books, i);
         free_book(book);
     }
-    free_vector(v);
+    free_vector(books);
 
     free_trie(dict_user);
     free_trie(dict_user_id);
@@ -164,7 +164,7 @@ BOOK *add_book(char *name, char *public, char *author, int price, int total) {
     BOOK *book = new_book(book_id_inc++, name, public, author, price, total);
     trie_add(dict_book, book->name, book);
     trie_add_int(dict_book_id, book->id, book);
-    vector_push(roll_vector, book);
+    vector_push(books, book);
     return book;
 }
 
@@ -174,7 +174,7 @@ BOOK *get_book_by_id(int id) {
 }
 
 vector *list_book() {
-    return roll_vector;
+    return books;
 }
 
 BOOK *modify_book(BOOK *book, char *name, char *public, char *author, int price, int total, int borrowed) {
@@ -190,7 +190,7 @@ BOOK *modify_book(BOOK *book, char *name, char *public, char *author, int price,
 void delete_book(BOOK *book) {
     trie_delete(dict_book, book->name);
     trie_delete_int(dict_book_id, book->id);
-    vector_delete_elem(roll_vector, book);
+    vector_delete_elem(books, book);
     free_book(book);
 }
 
