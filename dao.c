@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-12-04 23:23:27
- * @LastEditTime: 2020-12-11 22:07:38
+ * @LastEditTime: 2020-12-11 22:08:58
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \libadmin\dao.c
@@ -90,7 +90,6 @@ bool db_close() {
 
     for (int i = 0 ; i < vector_size(users) ; i++) {
         USER *user = vector_get(users, i);
-
         char *filename;
         asprintf(&filename, DB_USERDATA_FORMAT, user->id);
         write_file_cover(filename, user->borrowed, sizeof(int));
